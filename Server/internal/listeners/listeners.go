@@ -52,7 +52,7 @@ func handleConnection(conn net.Conn) {
 	}
 }
 
-func run(listeners []struct {
+func run(listeners struct {
 	address string
 	port    int
 }) {
@@ -64,9 +64,7 @@ func run(listeners []struct {
 	// 	{"0.0.0.0", 1338},
 	// }
 
-	for _, l := range listeners {
-		go startListener(l.address, l.port)
-	}
+	go startListener(listeners.address, listeners.port)
 
 	select {}
 }

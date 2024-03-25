@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"github.com/CooDiiNgg/Go_Empire_Powershell/internal/listeners"
 )
 
 // run listeners when a menu option is selected with the address and port
@@ -21,12 +20,12 @@ func main() {
 	fmt.Scanln(&choice)
 	switch choice {
 	case 1:
-		run([]struct {
+		type listener struct {
 			address string
 			port    int
-		}{
-			{"127.0.0.1", 1337}
-		})
+		}
+		listeners := listener{"127.0.0.1", 1337}
+		run(listeners)
 	case 2:
 		fmt.Println("Exiting...")
 
