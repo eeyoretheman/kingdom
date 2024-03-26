@@ -2,8 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net"
+	"kingdom/internal/listeners"
 )
 
 // run listeners when a menu option is selected with the address and port
@@ -19,21 +18,18 @@ func main() {
 	var choice int
 	fmt.Scanln(&choice)
 	switch choice {
+
 	case 1:
-		type listener struct {
-			address string
-			port    int
-		}
-		listeners := listener{"127.0.0.1", 1337}
-		run(listeners)
+		listen := listeners.Listener{Addr: "127.0.0.1", Port: 1337}
+		listeners.Run(listen)
 	case 2:
 		fmt.Println("Exiting...")
 
 	case 3:
 		// connect to the listener with local connection
-		conn, err := net.Dial("tcp", "127.0.0.1:1337")
-		if err != nil {
-			log.Fatal(err)
-		}
+		// conn, err := net.Dial("tcp", "127.0.0.1:1337")
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
 	}
 }

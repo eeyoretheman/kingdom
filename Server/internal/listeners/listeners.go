@@ -2,12 +2,18 @@ package listeners
 
 import (
 	"fmt"
+	notifier "kingdom/internal/notifier"
+	teller "kingdom/internal/tellers"
 	"log"
 	"net"
 )
 
+type Listener struct {
+	Addr string
+	Port int
+}
+
 func startListener(address string, port int) {
-	// Create a TCP listener
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", address, port))
 	if err != nil {
 		log.Fatal(err)
@@ -15,7 +21,6 @@ func startListener(address string, port int) {
 
 	fmt.Printf("Listening on %s:%d\n", address, port)
 
-	// Accept incoming connections
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -23,48 +28,16 @@ func startListener(address string, port int) {
 			continue
 		}
 
-		// Handle the connection in a separate goroutine
-		go handleConnection(conn)
+		go teller.Teller(conn)
+		ip_address := conn.RemoteAddr().String()
+		ip_address = "New connection from: " + ip_address
+		notifier.Notifier(ip_address)
 	}
 }
 
-func handleConnection(conn net.Conn) {
-	defer conn.Close()
+func Run(listen Listener) {
 
-	// Read data from the connection
-	buffer := make([]byte, 1024)
-	n, err := conn.Read(buffer)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	// Process the received data
-	data := buffer[:n]
-	fmt.Printf("Received data: %s\n", string(data))
-
-	// Send a response back to the client
-	response := []byte("Hello from the server!")
-	_, err = conn.Write(response)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-}
-
-func run(listeners struct {
-	address string
-	port    int
-}) {
-	// listeners := []struct {
-	// 	address string
-	// 	port    int
-	// }{
-	// 	{"0.0.0.0", 1337},
-	// 	{"0.0.0.0", 1338},
-	// }
-
-	go startListener(listeners.address, listeners.port)
+	go startListener(listen.Addr, listen.Port)
 
 	select {}
 }

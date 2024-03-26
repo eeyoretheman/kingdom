@@ -1,3 +1,3 @@
-module github.com/CooDiiNgg/Go_Empire_Powershell
+module kingdom
 
 go 1.22.1
