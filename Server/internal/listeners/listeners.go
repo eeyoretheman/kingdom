@@ -1,9 +1,9 @@
-package listeners
+package listener
 
 import (
 	"fmt"
-	notifier "kingdom/internal/notifier"
-	teller "kingdom/internal/tellers"
+	notifiers "kingdom/internal/notifiers"
+	tellers "kingdom/internal/tellers"
 	"log"
 	"net"
 )
@@ -13,13 +13,15 @@ type Listener struct {
 	Port int
 }
 
-func startListener(address string, port int) {
+func StartListener(address string, port int, callback chan<- tellers.Teller) {
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", address, port))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Printf("Listening on %s:%d\n", address, port)
+
+	name := "Fish"
 
 	for {
 		conn, err := listener.Accept()
@@ -28,16 +30,20 @@ func startListener(address string, port int) {
 			continue
 		}
 
-		go teller.Teller(conn)
-		ip_address := conn.RemoteAddr().String()
-		ip_address = "New connection from: " + ip_address
-		notifier.Notifier(ip_address)
+		newInput := make(chan []byte)
+		newOutput := make(chan []byte)
+
+		go tellers.StartTeller(conn, newInput, newOutput)
+		ipAddress := conn.RemoteAddr().String()
+		ipAddress = "New connection from: " + ipAddress
+
+		fmt.Println(ipAddress)
+
+		go notifiers.StartNotifier(callback, tellers.Teller{Name: name, Input: newInput, Output: newOutput})
+		name += "1"
 	}
 }
 
-func Run(listen Listener) {
-
-	go startListener(listen.Addr, listen.Port)
-
-	select {}
+func Run(listener Listener, callback chan<- tellers.Teller) {
+	go StartListener(listener.Addr, listener.Port, callback)
 }
