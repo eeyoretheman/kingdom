@@ -1,1 +1,3 @@
 Server/.env
+go.sum
+.vscode
