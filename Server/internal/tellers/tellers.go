@@ -7,9 +7,9 @@ import (
 )
 
 type Teller struct {
-	Name   string
 	Input  chan []byte
 	Output chan []byte
+	Owner  string
 }
 
 func clearSlice(slice []byte) {

@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	clients "kingdom/internal/clients"
 	listeners "kingdom/internal/listeners"
+	notifiers "kingdom/internal/notifiers"
 	tellers "kingdom/internal/tellers"
 	"net"
 	"strconv"
@@ -66,7 +68,7 @@ func debugHandler(channel chan []byte) {
 }
 
 // CLI + Backend all in 1 for now; separate later
-func main() {
+func old_main() {
 	printMenu()
 
 	var tellerList []tellers.Teller
@@ -81,18 +83,18 @@ func main() {
 	switch choice {
 	case 1:
 		listener := listeners.Listener{Addr: "127.0.0.1", Port: 1337}
-		listeners.Run(listener, callback)
+		listeners.New(listener, callback)
 
 		go debugHandler(clientDebug)
 
 		for {
 			select {
 			case t := <-callback:
-				fmt.Printf("Added %s\n", t.Name)
+				fmt.Printf("Added a new agent.\n")
 				tellerList = append(tellerList, t)
 				active = t // Set the newly added agent as active; Consider removing
 			case data := <-active.Output:
-				fmt.Printf("Input from '%s': %s", active.Name, data)
+				fmt.Printf("Received: %s", data)
 				active.Input <- []byte("ls\n")
 			case input := <-clientDebug:
 				p := strings.Split(strings.TrimSuffix(string(input), "\n"), " ")
@@ -109,8 +111,8 @@ func main() {
 					num, _ := strconv.Atoi(p[1])
 					active = tellerList[num]
 				case "ls":
-					for i, e := range tellerList {
-						clientDebug <- []byte(fmt.Sprintf("%d %s\n", i, e.Name))
+					for i := range tellerList {
+						clientDebug <- []byte(fmt.Sprintf("%d %s\n", i))
 					}
 				// NOTE: Allow for quoted strings and escapes
 				case "send":
@@ -129,5 +131,46 @@ func main() {
 		// if err != nil {
 		// 	log.Fatal(err)
 		// }
+	}
+}
+
+type Message struct {
+	To   string
+	From string
+	Body []byte
+}
+
+func main() {
+	clientList := make(map[string]clients.Client)
+	tellerList := make(map[string]tellers.Teller)
+
+	interpreterInput := make(chan []byte)
+	interpreterOutput := make(chan []byte)
+
+	clientChannel := make(chan notifiers.Message)
+	tellerChannel := make(chan notifiers.Message)
+
+	clients.New(clients.Client{})
+
+	for {
+		select {
+		case message := <-clientChannel:
+			if message.To == "!" {
+				cmd := strings.Split(strings.TrimSuffix(string(message.Body), "\n"), " ")
+				switch cmd[0] {
+				case "ls":
+					for i, e := range tellerList {
+						clientList[message.From].Input <- notifiers.Message{From: "!", Body: []byte(fmt.Sprintf("%d %s", i, e))}
+					}
+				case "active":
+					continue
+				default:
+				}
+			} else {
+
+			}
+		case message := <-tellerChannel:
+			fmt.Println(message, tellers)
+		}
 	}
 }
