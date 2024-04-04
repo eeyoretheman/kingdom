@@ -20,8 +20,9 @@ func StartListener(address string, port int, callback chan<- tellers.Teller) {
 	}
 
 	fmt.Printf("Listening on %s:%d\n", address, port)
+	num := 0
 
-	name := "Fish"
+	name := "Fish_" + fmt.Sprint(port) + "_" + fmt.Sprint(num)
 
 	for {
 		conn, err := listener.Accept()
@@ -40,7 +41,9 @@ func StartListener(address string, port int, callback chan<- tellers.Teller) {
 		fmt.Println(ipAddress)
 
 		go notifiers.StartNotifier(callback, tellers.Teller{Name: name, Input: newInput, Output: newOutput})
-		name += "1"
+		num += 1
+		name = "Fish_" + fmt.Sprint(port) + "_" + fmt.Sprint(num)
+
 	}
 }
 
