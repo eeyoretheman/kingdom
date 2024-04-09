@@ -1,62 +1,59 @@
-package client
+package clients
 
 import (
-	"fmt"
-	notifiers "kingdom/internal/notifiers"
+	ConnClosed "kingdom/internal/ConnClosed"
+	Reader "kingdom/internal/reader"
 	"log"
 	"net"
+	"strings"
 )
 
+type Request struct {
+	From    string
+	Target  string
+	Command string
+	Body    []byte
+}
+
 type Client struct {
-	Input  chan notifiers.Message
-	Output chan notifiers.Message
+	Input  chan []byte
+	Output chan []byte
 }
 
-func clearSlice(slice []byte) {
-	for i := 0; i < len(slice); i += 1 {
-		slice[i] = 0
-	}
-}
-
-func clientReader(conn net.Conn, output chan<- []byte) {
-	buf := make([]byte, 1024)
-
-	for {
-		n, err := conn.Read(buf)
-
-		if err != nil {
-			fmt.Println("[CLIENTS] Could not read; Connection was probably closed.")
-		}
-
-		copied := make([]byte, n)
-		copy(copied, buf)
-
-		output <- buf
-
-		clearSlice(buf)
-	}
-}
-
-func EphemeralReader(conn net.Conn, callback chan<- []byte) {
-	buf := make([]byte, 4096)
-
-	n, err := conn.Read(buf)
-
-	if err != nil {
-		log.Print(err)
-	}
-
-	callback <- buf[:n]
-}
-
-func goClient(client Client, conn net.Conn) {
+func ClientHandler(conn net.Conn, requests chan<- Request, client Client) {
 	reader := make(chan []byte)
+	readerErr := make(chan error)
+
+	go Reader.Reader(conn, reader, readerErr)
 
 	for {
-		go EphemeralReader(conn, reader)
-	}
-}
+		select {
+		case input := <-client.Input:
+			_, err := conn.Write(input)
 
-func New(client Client, conn net.Conn) {
-	go goClient(client, conn)
+			if err != nil {
+				log.Printf("Write failed(maybe); Error: %s\n", err)
+			}
+		case data := <-reader:
+			parts := strings.SplitN(string(data), " ", 4)
+
+			if len(parts) < 4 {
+				_, err := conn.Write([]byte("Malformed request.\nEach field is atleast one byte, space separated:\n[From] [Target] [Command] [Body]\n"))
+
+				if err != nil {
+					log.Printf("Write failed(maybe); Error: %s\n", err)
+				}
+
+				break
+			}
+
+			requests <- Request{From: parts[0], Target: parts[1], Command: parts[2], Body: []byte(parts[3])}
+		case err := <-readerErr:
+			log.Printf("Read failed; Error: %s\n", err)
+
+			if ConnClosed.ConnClosed(err) {
+				return
+			}
+		}
+	}
 }

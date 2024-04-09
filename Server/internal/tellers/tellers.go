@@ -1,10 +1,16 @@
-package teller
+package tellers
 
 import (
-	"fmt"
+	ConnClosed "kingdom/internal/ConnClosed"
+	Reader "kingdom/internal/reader"
 	"log"
 	"net"
 )
+
+type Response struct {
+	Target string
+	Body   []byte
+}
 
 type Teller struct {
 	Input  chan []byte
@@ -12,53 +18,28 @@ type Teller struct {
 	Owner  string
 }
 
-func clearSlice(slice []byte) {
-	for i := 0; i < len(slice); i += 1 {
-		slice[i] = 0
-	}
-}
-
-func TellerReader(conn net.Conn, output chan<- []byte) {
-	buffer := make([]byte, 1024)
-
-	for {
-		n, err := conn.Read(buffer)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		copied := make([]byte, n)
-		copy(copied, buffer)
-
-		output <- copied
-		clearSlice(buffer)
-	}
-}
-
-func StartTeller(conn net.Conn, input <-chan []byte, output chan<- []byte) {
-	defer conn.Close()
-
+func TellerHandler(conn net.Conn, responses chan<- Response, teller *Teller) {
 	reader := make(chan []byte)
-	go TellerReader(conn, reader)
+	readerErr := make(chan error)
+
+	go Reader.Reader(conn, reader, readerErr)
 
 	for {
 		select {
-		case cmd := <-input:
-			_, err := conn.Write(cmd)
+		case input := <-teller.Input:
+			_, err := conn.Write(input)
+
 			if err != nil {
-				fmt.Println(err)
+				log.Printf("Write failed(maybe); Error: %s\n", err)
 			}
 		case data := <-reader:
-			output <- data
-		}
+			responses <- Response{Target: teller.Owner, Body: data}
+		case err := <-readerErr:
+			log.Printf("Read failed; Error: %s\n", err)
 
-		// send command ls to the client
-		// command := []byte("ls\n")
-		// _, err = conn.Write(command)
-		// if err != nil {
-		//	  log.Println(err)
-		// 	  return
-		// }
+			if ConnClosed.ConnClosed(err) {
+				responses <- Response{"!", []byte(teller.Owner)}
+			}
+		}
 	}
 }

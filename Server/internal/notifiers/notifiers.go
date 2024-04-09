@@ -1,14 +1,10 @@
-package notifier
+package notifiers
 
 import (
+	clients "kingdom/internal/clients"
 	tellers "kingdom/internal/tellers"
 )
 
-type Message struct {
-	From string
-	Body []byte
-}
-
-func StartNotifier(callback chan<- tellers.Teller, teller tellers.Teller) {
-	callback <- teller
+func Notifier[T *tellers.Teller | clients.Client](object T, channel chan T) {
+	channel <- object
 }

@@ -4,173 +4,146 @@ import (
 	"fmt"
 	clients "kingdom/internal/clients"
 	listeners "kingdom/internal/listeners"
-	notifiers "kingdom/internal/notifiers"
 	tellers "kingdom/internal/tellers"
-	"net"
-	"strconv"
+	"log"
+	"math/rand"
 	"strings"
 )
 
-// Default client port: 2222
-// NOTE: Closing the client (netcat) crashes the server; Make the server wait for a new connection if the old one closed.
-
-// run listeners when a menu option is selected with the address and port
-func printMenu() {
-	fmt.Println("1. Start listener")
-	fmt.Println("2. Exit")
-	fmt.Println("3. Manual connect to listener")
-	fmt.Print("Enter your choice: ")
-}
-
-func debugReader(conn net.Conn, output chan<- []byte) {
-	for {
-		buf := make([]byte, 1024)
-
-		n, err := conn.Read(buf)
-
-		if err != nil {
-			panic("[DEBUG] Could not read.")
-		}
-
-		copied := make([]byte, n)
-		copy(copied, buf)
-
-		output <- copied
-	}
-}
-
-// Refactor later
-func debugHandler(channel chan []byte) {
-	listener, err := net.Listen("tcp", "localhost:2222")
-
-	if err != nil {
-		panic("[DEBUG] Could not bind on :2222.")
-	}
-
-	conn, err := listener.Accept()
-
-	if err != nil {
-		panic("[DEBUG] Could not accept connection.")
-	}
-
-	input := make(chan []byte)
-
-	for {
-		go debugReader(conn, input)
-
-		select {
-		case data := <-channel:
-			conn.Write(data)
-		case bytes := <-input:
-			channel <- bytes
-		}
-	}
-}
-
-// CLI + Backend all in 1 for now; separate later
-func old_main() {
-	printMenu()
-
-	var tellerList []tellers.Teller
-	var active tellers.Teller
-	callback := make(chan tellers.Teller)
-
-	clientDebug := make(chan []byte)
-
-	var choice int
-	fmt.Scanln(&choice)
-
-	switch choice {
-	case 1:
-		listener := listeners.Listener{Addr: "127.0.0.1", Port: 1337}
-		listeners.New(listener, callback)
-
-		go debugHandler(clientDebug)
-
-		for {
-			select {
-			case t := <-callback:
-				fmt.Printf("Added a new agent.\n")
-				tellerList = append(tellerList, t)
-				active = t // Set the newly added agent as active; Consider removing
-			case data := <-active.Output:
-				fmt.Printf("Received: %s", data)
-				active.Input <- []byte("ls\n")
-			case input := <-clientDebug:
-				p := strings.Split(strings.TrimSuffix(string(input), "\n"), " ")
-
-				fmt.Println(p)
-
-				switch p[0] {
-				case "active":
-					fmt.Println(len(p))
-					if len(p) < 2 {
-						clientDebug <- []byte("Not enough args.\n")
-						break
-					}
-					num, _ := strconv.Atoi(p[1])
-					active = tellerList[num]
-				case "ls":
-					for i := range tellerList {
-						clientDebug <- []byte(fmt.Sprintf("%d %s\n", i))
-					}
-				// NOTE: Allow for quoted strings and escapes
-				case "send":
-					active.Input <- []byte(p[1])
-				default:
-					clientDebug <- []byte("No such command.\n")
-				}
-			}
-		}
-	case 2:
-		fmt.Println("Exiting...")
-
-	case 3:
-		// connect to the listener with local connection
-		// conn, err := net.Dial("tcp", "127.0.0.1:1337")
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
-	}
-}
-
-type Message struct {
-	To   string
-	From string
-	Body []byte
-}
+//type Client clients.Client
+//type Teller tellers.Teller
+//type Request clients.Request
+//type Response tellers.Response
 
 func main() {
-	clientList := make(map[string]clients.Client)
-	tellerList := make(map[string]tellers.Teller)
+	clients := make(map[string]clients.Client)
+	tellers := make(map[string]*tellers.Teller)
 
-	interpreterInput := make(chan []byte)
-	interpreterOutput := make(chan []byte)
+	clientChannel := make(chan clients.Client)
+	tellerChannel := make(chan *tellers.Teller)
 
-	clientChannel := make(chan notifiers.Message)
-	tellerChannel := make(chan notifiers.Message)
+	requests := make(chan clients.Request)
+	responses := make(chan tellers.Response)
 
-	clients.New(clients.Client{})
+	go listeners.ClientListener("localhost:2222", requests, clientChannel)
 
 	for {
 		select {
-		case message := <-clientChannel:
-			if message.To == "!" {
-				cmd := strings.Split(strings.TrimSuffix(string(message.Body), "\n"), " ")
-				switch cmd[0] {
-				case "ls":
-					for i, e := range tellerList {
-						clientList[message.From].Input <- notifiers.Message{From: "!", Body: []byte(fmt.Sprintf("%d %s", i, e))}
+		case request := <-requests:
+			if request.Target == "!" {
+				switch request.Command {
+				case "lst":
+					for name := range tellers {
+						clients[request.From].Input <- []byte(fmt.Sprintf("%s, %s\n", name, tellers[name].Owner))
 					}
-				case "active":
-					continue
-				default:
-				}
-			} else {
+				case "lsc":
+					for name := range clients {
+						clients[request.From].Input <- []byte(fmt.Sprintf("%s\n", name))
+					}
+				case "rmt":
+					id := strings.TrimSuffix(string(request.Body), "\n")
+					_, ok := tellers[id]
 
+					if !ok {
+						clients[request.From].Input <- []byte("No such teller.\n")
+						break
+					}
+
+					delete(tellers, id)
+				case "rmc":
+					id := strings.TrimSuffix(string(request.Body), "\n")
+					_, ok := clients[id]
+
+					if !ok {
+						clients[request.From].Input <- []byte("No such client.\n")
+						break
+					}
+
+					delete(clients, id)
+				case "tl":
+					bind := strings.TrimSuffix(string(request.Body), "\n")
+					go listeners.TellerListener(bind, responses, tellerChannel)
+				case "cl":
+					bind := strings.TrimSuffix(string(request.Body), "\n")
+					go listeners.ClientListener(bind, requests, clientChannel)
+				}
+				break
 			}
-		case message := <-tellerChannel:
-			fmt.Println(message, tellers)
+
+			switch request.Command {
+			case "lock":
+				teller, ok := tellers[request.Target]
+
+				if !ok {
+					clients[request.From].Input <- []byte("No such teller.\n")
+					break
+				}
+
+				if teller.Owner != "!" {
+					clients[request.From].Input <- []byte("Already locked.\n")
+					break
+				}
+
+				teller.Owner = request.From
+				tellers[request.Target] = teller
+			case "unlock":
+				teller, ok := tellers[request.Target]
+
+				if !ok {
+					clients[request.From].Input <- []byte("No such teller.\n")
+					break
+				}
+
+				if teller.Owner != request.From {
+					clients[request.From].Input <- []byte("You do not own that.\n")
+					break
+				}
+
+				teller.Owner = "!"
+				tellers[request.Target] = teller
+			case "send":
+				teller, ok := tellers[request.Target]
+
+				if !ok {
+					clients[request.From].Input <- []byte("No such teller.\n")
+					break
+				}
+
+				if teller.Owner != request.From {
+					clients[request.From].Input <- []byte("You do not own that.\n")
+					break
+				}
+
+				teller.Input <- request.Body
+			}
+		case response := <-responses:
+			if response.Target == "!" {
+				_, ok := clients[string(response.Body)]
+
+				if !ok {
+					log.Println("Orphaned response:", response)
+					break
+				}
+
+				clients[string(response.Body)].Input <- []byte("Your teller died.\n")
+				break
+			}
+
+			_, ok := clients[response.Target]
+
+			if !ok {
+				log.Println("Orphaned response:", response)
+				break
+			}
+
+			clients[response.Target].Input <- response.Body
+		case client := <-clientChannel:
+			name := fmt.Sprint(rand.Int())
+			clients[name] = client
+			client.Input <- []byte(name + "\n")
+		case teller := <-tellerChannel:
+			name := fmt.Sprint(rand.Int())
+			tellers[name] = teller
 		}
 	}
 }
