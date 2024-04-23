@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	clients "kingdom/internal/clients"
-	listeners "kingdom/internal/listeners"
-	tellers "kingdom/internal/tellers"
+	. "kingdom/internal/clients"
+	. "kingdom/internal/listeners"
+	. "kingdom/internal/tellers"
 	"log"
 	"math/rand"
 	"strings"
@@ -16,16 +16,16 @@ import (
 //type Response tellers.Response
 
 func main() {
-	clients := make(map[string]clients.Client)
-	tellers := make(map[string]*tellers.Teller)
+	clients := make(map[string]Client)
+	tellers := make(map[string]*Teller)
 
-	clientChannel := make(chan clients.Client)
-	tellerChannel := make(chan *tellers.Teller)
+	clientChannel := make(chan Client)
+	tellerChannel := make(chan *Teller)
 
-	requests := make(chan clients.Request)
-	responses := make(chan tellers.Response)
+	requests := make(chan Request)
+	responses := make(chan Response)
 
-	go listeners.ClientListener("localhost:2222", requests, clientChannel)
+	go ClientListener("localhost:2222", requests, clientChannel)
 
 	for {
 		select {
@@ -62,10 +62,10 @@ func main() {
 					delete(clients, id)
 				case "tl":
 					bind := strings.TrimSuffix(string(request.Body), "\n")
-					go listeners.TellerListener(bind, responses, tellerChannel)
+					go TellerListener(bind, responses, tellerChannel)
 				case "cl":
 					bind := strings.TrimSuffix(string(request.Body), "\n")
-					go listeners.ClientListener(bind, requests, clientChannel)
+					go ClientListener(bind, requests, clientChannel)
 				}
 				break
 			}
