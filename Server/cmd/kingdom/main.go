@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	agents "kingdom/internal/agents"
 	. "kingdom/internal/clients"
 	. "kingdom/internal/listeners"
 	. "kingdom/internal/tellers"
@@ -9,11 +10,6 @@ import (
 	"math/rand"
 	"strings"
 )
-
-//type Client clients.Client
-//type Teller tellers.Teller
-//type Request clients.Request
-//type Response tellers.Response
 
 func main() {
 	clients := make(map[string]Client)
@@ -63,6 +59,8 @@ func main() {
 				case "tl":
 					bind := strings.TrimSuffix(string(request.Body), "\n")
 					go TellerListener(bind, responses, tellerChannel)
+					var agent = agents.Print_agent(bind)
+					clients[request.From].Input <- []byte(agent + "\n")
 				case "cl":
 					bind := strings.TrimSuffix(string(request.Body), "\n")
 					go ClientListener(bind, requests, clientChannel)
