@@ -37,6 +37,56 @@ To install Kingdom, follow these steps:
 
 For detailed installation instructions and usage examples, please refer to the [documentation](https://github.com/eeyoretheman/kingdom/wiki).
 
+## Usage
+
+After starting Kingdom, you can interact with the C2 server using the command-line interface (CLI). Here are some examples of the available commands:
+
+- **Teller**: Create a new listener:
+
+    ```shell
+    ! ! tl 192.168.88.185:8080
+    ```
+- **Client**: Create a client:
+
+    ```shell
+    ! ! cl localhost:1337
+    ```
+- **List Tellers**: List all listeners:
+
+    ```shell
+    ! ! lst !
+    ```
+- **List Clients**: List all clients:
+
+    ```shell
+    ! ! lsc !
+    ```
+- **Remove Teller**: Remove a listener:
+
+    ```shell
+    ! ! rmt <teller_id>
+    ```
+- **Remove Client**: Remove a client:
+
+    ```shell
+    ! ! rmc <client_id>
+    ```
+- **Lock**: Lock a teller to a client:
+
+    ```shell
+    <client_id> <teller_id> lock !
+    ```
+- **Unlock**: Unlock a teller from a client:
+
+    ```shell
+    <client_id> <teller_id> unlock !
+    ```
+- **Execute**: Execute a command on a client:
+
+    ```shell
+    <client_id> <teller_id> send <command>
+    ```
+
 ## Contributing
 
 There is no support for contributing :(.
