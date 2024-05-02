@@ -2,59 +2,38 @@ package main
 
 import (
 	// Consider termui instead
+	writer "kli/internal/Writers"
 	reader "kli/internal/reader"
 	"log"
 	"net"
 )
 
-type Response struct {
-	From    string
-	To      string
-	Command string
-	Body    []byte
-}
+func main() {
+	writers := make(map[string]*writer.Writer)
+	current := ""
 
-type Request struct {
-	From    string
-	To      string
-	Command string
-}
-
-func connect_to_main_server(request chan Request, response chan Response) {
-	conn, err := net.Dial("tcp", "localhost:2222")
+	temp_conn, err := net.Dial("tcp", "localhost:2222")
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Could not connect to server; Error: %s\n", err)
+		return
 	}
-	defer conn.Close()
-
+	temp_request := make(chan writer.Request)
+	temp_response := make(chan []byte)
+	temp_writer := writer.Writer{Conn: temp_conn, From: "!", Request: temp_request, Response: temp_response}
+	id := ""
 	read := make(chan []byte)
-	errChan := make(chan error)
-	go reader.Reader(conn, read, errChan)
-
-	r := make(chan Request)
+	readerErr := make(chan error)
+	reader.Reader(temp_conn, read, readerErr)
+	id = string(<-read)
+	temp_writer.From = id
+	writers[id] = &temp_writer
+	current = id
+	go writer.WriterHandler(&temp_writer)
 
 	for {
-		select {
-		case req := <-request:
-			if req.To == "!" {
-				conn.Write([]byte("! ! " + req.Command))
-			} else {
-				conn.Write([]byte(req.From + " " + req.To + " " + req.Command))
-			}
-			r <- req
-		case data := <-read:
-			req := <-r
-			response <- Response{From: req.From, To: req.To, Command: req.Command, Body: data}
-		case err := <-errChan:
-			log.Fatal(err)
+		if current == "" {
+			log.Printf("No current writer\n")
+			return
 		}
 	}
-}
-
-func main() {
-	request := make(chan Request)
-	response := make(chan Response)
-
-	go connect_to_main_server(request, response)
-	// ill fix it later probably this day but will push for now
 }
