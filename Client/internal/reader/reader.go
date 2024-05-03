@@ -1,7 +1,7 @@
 package reader
 
 import (
-	ConnClosed "kli/internal/ConnClosed"
+	ConnClosed "kli/internal/conn_closed"
 	"net"
 )
 

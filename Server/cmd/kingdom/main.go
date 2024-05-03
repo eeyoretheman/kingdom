@@ -58,12 +58,17 @@ func main() {
 					delete(clients, id)
 				case "tl":
 					bind := strings.TrimSuffix(string(request.Body), "\n")
+
 					go TellerListener(bind, responses, tellerChannel)
-					var agent = agents.Print_agent(bind)
+
+					var agent = agents.PrintAgent(bind)
+
 					clients[request.From].Input <- []byte(agent + "\n")
 				case "cl":
 					bind := strings.TrimSuffix(string(request.Body), "\n")
 					go ClientListener(bind, requests, clientChannel)
+				default:
+					clients[request.From].Input <- []byte("No such command.\n")
 				}
 				break
 			}

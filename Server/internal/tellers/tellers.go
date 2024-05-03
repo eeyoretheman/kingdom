@@ -1,7 +1,7 @@
 package tellers
 
 import (
-	ConnClosed "kingdom/internal/ConnClosed"
+	ConnClosed "kingdom/internal/conn_closed"
 	Reader "kingdom/internal/reader"
 	"log"
 	"net"

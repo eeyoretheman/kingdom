@@ -1,7 +1,7 @@
 package reader
 
 import (
-	ConnClosed "kingdom/internal/ConnClosed"
+	ConnClosed "kingdom/internal/conn_closed"
 	"net"
 )
 

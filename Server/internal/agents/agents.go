@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-func Print_agent(bind string) string {
+func PrintAgent(bind string) string {
 	//split bind into ip and port
 	ip := strings.Split(bind, ":")[0]
 	port := strings.Split(bind, ":")[1]

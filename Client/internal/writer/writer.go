@@ -1,7 +1,8 @@
 package Writers
 
 import (
-	ConnClosed "kli/internal/ConnClosed"
+	"fmt"
+	ConnClosed "kli/internal/conn_closed"
 	Read "kli/internal/reader"
 	"log"
 	"net"
@@ -10,6 +11,7 @@ import (
 type Request struct {
 	To      string
 	Command string
+	Body    string
 }
 
 type Writer struct {
@@ -32,10 +34,11 @@ func WriterHandler(writer *Writer) {
 		select {
 		case input := <-request:
 			err := error(nil)
+
 			if input.To == "!" {
-				_, err = conn.Write([]byte(writer.From + " " + "!" + input.Command))
+				_, err = conn.Write([]byte(fmt.Sprintf("%s ! %s %s", writer.From, input.Command, input.Body)))
 			} else {
-				_, err = conn.Write([]byte(writer.From + " " + input.To + " " + input.Command))
+				_, err = conn.Write([]byte(fmt.Sprintf("%s %s %s %s", writer.From, input.To, input.Command, input.Body)))
 			}
 
 			if err != nil {
