@@ -139,7 +139,8 @@ func main() {
 				break
 			}
 
-			clients[response.Target].Input <- response.Body
+			dataStr := string(response.Body)
+			clients[response.Target].Input <- []byte(dataStr)
 		case client := <-clientChannel:
 			name := fmt.Sprint(rand.Int())
 			clients[name] = client
