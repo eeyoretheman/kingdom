@@ -61,9 +61,9 @@ func main() {
 
 					go TellerListener(bind, responses, tellerChannel)
 
-					var agent = agents.PrintAgent(bind)
+					var agent, agent_win = agents.PrintAgent(bind)
 
-					clients[request.From].Input <- []byte(agent + "\n")
+					clients[request.From].Input <- []byte("Linux:\n" + agent + "\n\nWindows:\n" + agent_win + "\n")
 				case "cl":
 					bind := strings.TrimSuffix(string(request.Body), "\n")
 					go ClientListener(bind, requests, clientChannel)
