@@ -1,0 +1,7 @@
+# if [ `id -u` -ne 0 ]
+#   then echo No
+# else
+#     echo Yes
+# fi
+
+echo aWYgWyBgaWQgLXVgIC1uZSAwIF0KICB0aGVuIGVjaG8gTm8KZWxzZQogICAgZWNobyBZZXMKZmk= | base64 -d | sh

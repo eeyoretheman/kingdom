@@ -1,6 +1,9 @@
 package agents
 
 import (
+	"log"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -17,4 +20,60 @@ func PrintAgent(bind string) (string, string) {
 
 	return cmd, cmd_win
 
+}
+
+func GetMacroCommands() []string {
+	path, err := os.Getwd()
+	if err != nil {
+		log.Println(err)
+	}
+	path = path + "../../../internal/agents/macros"
+	path, _ = filepath.Abs(path)
+
+	files, err := os.ReadDir(path + "/lin")
+	if err != nil {
+		panic(err)
+	}
+	// for now just print the file names
+	var commands []string
+	for _, file := range files {
+		commands = append(commands, "lin/"+file.Name())
+	}
+
+	files, err = os.ReadDir(path + "/win")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, file := range files {
+		commands = append(commands, "win/"+file.Name())
+	}
+
+	log.Println(commands)
+	return commands
+}
+
+func GetMacroCommand(command string) string {
+	path, err := os.Getwd()
+	if err != nil {
+		log.Println(err)
+	}
+	path = path + "../../../internal/agents/macros"
+	path, _ = filepath.Abs(path)
+
+	content, err := os.ReadFile(path + "/" + command)
+
+	lines := strings.Split(string(content), "\n")
+	var newContent string
+	for _, line := range lines {
+		if !strings.HasPrefix(line, "#") {
+			newContent += line + "\n"
+		}
+	}
+	content = []byte(newContent)
+
+	if err != nil {
+		panic(err)
+	}
+	return string(content)
 }

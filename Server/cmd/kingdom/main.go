@@ -117,6 +117,18 @@ func main() {
 					break
 				}
 
+				macros := agents.GetMacroCommands()
+
+				// remove newline from the end of the request.Body
+				test := strings.TrimSuffix(string(request.Body), "\n")
+
+				for _, macro := range macros {
+					if macro == test {
+						request.Body = []byte(agents.GetMacroCommand(macro))
+						break
+					}
+				}
+
 				teller.Input <- request.Body
 			}
 		case response := <-responses:
