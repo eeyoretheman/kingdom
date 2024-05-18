@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"encoding/base64"
 	"log"
 	"os"
 	"path/filepath"
@@ -71,6 +72,12 @@ func GetMacroCommand(command string) string {
 		}
 	}
 	content = []byte(newContent)
+
+	if strings.HasPrefix(command, "lin") {
+		content = []byte("echo " + base64.StdEncoding.EncodeToString(content) + " | base64 -d | bash")
+	} else {
+		content = []byte("echo " + base64.StdEncoding.EncodeToString(content) + " | base64 -d | powershell -nop -")
+	}
 
 	if err != nil {
 		panic(err)
