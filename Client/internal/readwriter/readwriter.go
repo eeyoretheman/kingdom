@@ -14,14 +14,14 @@ type Request struct {
 	Body    string
 }
 
-type Writer struct {
+type ReadWriter struct {
 	Conn     net.Conn
 	From     string
 	Request  chan Request
 	Response chan []byte
 }
 
-func WriterHandler(writer *Writer) {
+func ReadWriterHandler(writer *ReadWriter) {
 	reader := make(chan []byte)
 	readerErr := make(chan error)
 	conn := writer.Conn

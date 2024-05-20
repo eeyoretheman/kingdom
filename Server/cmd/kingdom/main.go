@@ -29,13 +29,31 @@ func main() {
 			if request.Target == "!" {
 				switch request.Command {
 				case "lst":
+					if len(tellers) == 0 {
+						clients[request.From].Input <- []byte("No tellers\n")
+						break
+					}
+
+					var total string
+
 					for name := range tellers {
-						clients[request.From].Input <- []byte(fmt.Sprintf("%s, %s\n", name, tellers[name].Owner))
+						total += fmt.Sprintf("%s, %s\n", name, tellers[name].Owner)
 					}
+
+					clients[request.From].Input <- []byte(total)
 				case "lsc":
-					for name := range clients {
-						clients[request.From].Input <- []byte(fmt.Sprintf("%s\n", name))
+					if len(clients) == 0 {
+						clients[request.From].Input <- []byte("No clients\n")
+						break
 					}
+
+					var total string
+
+					for name := range clients {
+						total += fmt.Sprintf("%s\n", name)
+					}
+
+					clients[request.From].Input <- []byte(total)
 				case "rmt":
 					id := strings.TrimSuffix(string(request.Body), "\n")
 					_, ok := tellers[id]
