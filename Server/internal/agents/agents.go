@@ -84,3 +84,18 @@ func GetMacroCommand(command string) string {
 	}
 	return string(content)
 }
+
+func GetAllCommands() []string {
+	var commands []string
+	commands = append(commands, "send")
+	commands = append(commands, "lock")
+	commands = append(commands, "unlock")
+	commands = append(commands, "tl")
+	commands = append(commands, "cl")
+	commands = append(commands, "lst")
+	commands = append(commands, "lsc")
+	commands = append(commands, "rmt")
+	commands = append(commands, "rmc")
+	commands = append(commands, GetMacroCommands()...)
+	return commands
+}
