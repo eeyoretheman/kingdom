@@ -6,6 +6,8 @@ import (
 	Read "kli/internal/reader"
 	"log"
 	"net"
+
+	ui "github.com/gizak/termui/v3"
 )
 
 type Request struct {
@@ -50,7 +52,9 @@ func ReadWriterHandler(writer *ReadWriter) {
 			log.Printf("Read failed; Error: %s\n", err)
 
 			if ConnClosed.ConnClosed(err) {
-				response <- []byte("!")
+				ui.Close()
+				writer.Conn.Close()
+				log.Fatalf("Connection to server is down.\n")
 			}
 		}
 	}
