@@ -1,9 +1,7 @@
 $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 # Check if the current user is an administrator
 if ($currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    # The current user is an administrator
     Write-Host "Yes"
 } else {
-    # The current user is not an administrator
     Write-Host "No"
 }

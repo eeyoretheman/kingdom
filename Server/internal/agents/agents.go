@@ -74,14 +74,19 @@ func GetMacroCommand(command string) string {
 	content = []byte(newContent)
 
 	if strings.HasPrefix(command, "lin") {
-		content = []byte("echo " + base64.StdEncoding.EncodeToString(content) + " | base64 -d | bash")
+		log.Println("lin")
+		log.Println(base64.StdEncoding.EncodeToString(content))
+		// encode to base64 utf-8
+		content = []byte("echo " + base64.StdEncoding.EncodeToString(content) + " | base64 -d | sh\n")
 	} else {
-		content = []byte("echo " + base64.StdEncoding.EncodeToString(content) + " | base64 -d | powershell -nop -")
+		// encode to base64 utf-16le
+		content = []byte("powershell -nop -c \"$command = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('" + base64.StdEncoding.EncodeToString(content) + "')); iex $command\"\n")
 	}
 
 	if err != nil {
 		panic(err)
 	}
+	log.Println(string(content))
 	return string(content)
 }
 

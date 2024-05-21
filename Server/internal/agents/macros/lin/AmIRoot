@@ -3,5 +3,6 @@ if [ `id -u` -ne 0 ]
 else
     echo Yes
 fi
-
 # echo aWYgWyBgaWQgLXVgIC1uZSAwIF0KICB0aGVuIGVjaG8gTm8KZWxzZQogICAgZWNobyBZZXMKZmk= | base64 -d | sh
+# aWYgWyBgaWQgLXVgIC1uZSAwIF0KICB0aGVuIGVjaG8gTm8KZWxzZQogICAgZWNobyBZZXMKZmkK
+# echo aWYgWyBgaWQgLXVgIC1uZSAwIF0KICB0aGVuIGVjaG8gTm8KZWxzZQogICAgZWNobyBZZXMKZmkK | base64 -d | sh
