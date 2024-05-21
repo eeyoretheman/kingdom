@@ -41,59 +41,107 @@ For detailed installation instructions and usage examples, please refer to the [
 
 After starting Kingdom, you can interact with the C2 server using the command-line interface (CLI). Here are some examples of the available commands:
 
-- **Teller**: Create a new listener:
+![Kingdom CLI](https://placehold.co/600x400)
+
+<!--Global:
+Ctrl + U - go to the teller menu
+Ctrl + Y - go to the input menu
+Ctrl + C - exit
+
+Input menu:
+Left arrow - Move cursor left
+Right arrow - Move cursor right
+Up arrow - previous command
+Down arrow - next command
+Ctrl + J - scroll history down
+Ctrl + K - scroll history up
+Enter - submit command
+
+Teller menu:
+Up arrow - scroll one teller up
+Down arrow - scroll one teller down
+Enter -  select teller-->
+
+### Controls
+
+- **Global**:
+  - `Ctrl + U`: Go to the teller menu
+  - `Ctrl + Y`: Go to the input menu
+  - `Ctrl + C`: Exit
+
+- **Input Menu**:
+    - `Left Arrow`: Move cursor left
+    - `Right Arrow`: Move cursor right
+    - `Up Arrow`: Previous command
+    - `Down Arrow`: Next command
+    - `Ctrl + J`: Scroll history down
+    - `Ctrl + K`: Scroll history up
+    - `Enter`: Submit command
+
+- **Teller Menu**:
+    - `Up Arrow`: Scroll one teller up
+    - `Down Arrow`: Scroll one teller down
+    - `Enter`: Select teller
+
+### Examples
+
+- **Create a teller**:
 
     ```shell
-    ! ! tl 192.168.88.185:8080
+    tl <ip>:<port>
     ```
-- **Client**: Create a client:
+
+- **Creaye a client**:
 
     ```shell
-    ! ! cl localhost:1337
+    cl <ip>:<port>
     ```
-- **List Tellers**: List all listeners:
+
+- **List tellers**:
 
     ```shell
-    ! ! lst !
+    lst
     ```
-- **List Clients**: List all clients:
+
+- **List clients**:
 
     ```shell
-    ! ! lsc !
+    lsc
     ```
-- **Remove Teller**: Remove a listener:
+
+- **Remove teller**:
 
     ```shell
-    ! ! rmt <teller_id>
+    rmt <teller_id>
     ```
-- **Remove Client**: Remove a client:
+
+- **Remove client**:
 
     ```shell
-    ! ! rmc <client_id>
+    rmc <client_id>
     ```
-- **Lock**: Lock a teller to a client:
+
+- **Lock a client to a teller**:
 
     ```shell
-    <client_id> <teller_id> lock !
+    lock
     ```
-- **Unlock**: Unlock a teller from a client:
+
+- **Unlock a client from a teller**:
 
     ```shell
-    <client_id> <teller_id> unlock !
+    unlock
     ```
-- **Execute**: Execute a command on a client:
+
+- **Execute a command on a client**:
 
     ```shell
-    <client_id> <teller_id> send <command>
+    send <command/macro>
     ```
 
 ## Contributing
 
 There is no support for contributing :(.
-
-## License
-
-Kingdom is licensed under the [MIT License](https://github.com/your-username/kingdom/LICENSE).
 
 ## Contact
 
