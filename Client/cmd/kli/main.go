@@ -9,6 +9,7 @@ import (
 
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
+	tb "github.com/nsf/termbox-go"
 )
 
 const (
@@ -35,6 +36,7 @@ type State struct {
 }
 
 func initialize() State {
+	tb.SetInputMode(tb.InputEsc)
 	width, height := ui.TerminalDimensions()
 
 	server := widgets.NewParagraph()
@@ -155,8 +157,13 @@ func main() {
 
 				data.tellers = []string{"!"}
 				data.tellers = append(data.tellers, strings.Split(text, "\n")...)
+
+				mode = UpdateHistory
 			case UpdateHistory:
 				data.history[data.teller] = append(data.history[data.teller], text)
+
+				mode = UpdateTellers
+				connection.Request <- readwriter.Request{To: "!", Command: "lst", Body: "."}
 			}
 		case e := <-uiEvents:
 			switch data.selection {
@@ -222,20 +229,22 @@ func main() {
 					if data.selection < 2 {
 						data.selection += 1
 					}
-				case "<MouseWheelDown>":
+
+					mode = UpdateTellers
+					connection.Request <- readwriter.Request{To: "!", Command: "lst", Body: "."}
+				case "<C-j>":
 					if data.historyShift < len(data.history[data.teller])-1 {
-						state.history.ScrollDown()
+						data.historyShift += 1
 					}
-				case "<MouseWheelUp>":
+				case "<C-k>":
 					if data.historyShift > 0 {
-						state.history.ScrollUp()
+						data.historyShift -= 1
 					}
 				default:
 					data.input += e.ID
 					data.cursor += 1
 				}
 			case 1:
-				// SET HISTORYSHIFT TO 0 WHEN SWITCHING TELLERS
 				switch e.ID {
 				case "<C-c>":
 					return
@@ -253,6 +262,13 @@ func main() {
 					state.teller.ScrollUp()
 				case "<Enter>":
 					data.teller = strings.Split(state.teller.Rows[state.teller.SelectedRow], ",")[0]
+
+					if len(data.history[data.teller]) < 5 {
+						data.historyShift = 0
+					} else {
+						data.historyShift = len(data.history[data.teller]) - 5
+					}
+
 					data.selection = 2
 				}
 			}
