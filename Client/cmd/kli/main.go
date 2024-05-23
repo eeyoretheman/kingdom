@@ -216,7 +216,7 @@ func main() {
 					data.input = ""
 					data.cursor = 0
 
-					connection.Request <- readwriter.Request{To: "!", Command: "lst", Body: "."}
+					//connection.Request <- readwriter.Request{To: "!", Command: "lst", Body: "."}
 				case "<C-u>":
 					if data.selection > 1 {
 						data.selection -= 1
