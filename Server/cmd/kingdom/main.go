@@ -30,7 +30,7 @@ func main() {
 				switch request.Command {
 				case "lst":
 					if len(tellers) == 0 {
-						clients[request.From].Input <- []byte("No tellers\n")
+						clients[request.From].Input <- []byte("#!!#No tellers\n")
 						break
 					}
 
@@ -40,10 +40,10 @@ func main() {
 						total += fmt.Sprintf("%s, %s\n", name, tellers[name].Owner)
 					}
 
-					clients[request.From].Input <- []byte(total)
+					clients[request.From].Input <- []byte("#!!#" + total)
 				case "lsc":
 					if len(clients) == 0 {
-						clients[request.From].Input <- []byte("No clients\n")
+						clients[request.From].Input <- []byte("#!!#No clients\n")
 						break
 					}
 
@@ -53,7 +53,7 @@ func main() {
 						total += fmt.Sprintf("%s\n", name)
 					}
 
-					clients[request.From].Input <- []byte(total)
+					clients[request.From].Input <- []byte("#!!#" + total)
 				case "rmt":
 					id := strings.TrimSuffix(string(request.Body), "\n")
 					_, ok := tellers[id]

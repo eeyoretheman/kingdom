@@ -14,7 +14,7 @@ import (
 
 const (
 	UpdateTellers int = 1
-	UpdateHistory     = 2
+	UpdateHistory int = 2
 )
 
 type Data struct {
@@ -135,7 +135,6 @@ func main() {
 
 	//data.tellers = updateTellers(&connection)
 
-	mode := UpdateTellers
 	connection.Request <- readwriter.Request{To: "!", Command: "lst", Body: "."}
 
 	render(state, data)
@@ -147,8 +146,8 @@ func main() {
 		case r := <-connection.Response:
 			text := string(r)
 
-			switch mode {
-			case UpdateTellers:
+			if strings.Contains(text, "#!!#") {
+				text = strings.ReplaceAll(text, "#!!#", "")
 				data.tellers = []string{"!"}
 
 				if text == "No tellers\n" {
@@ -157,13 +156,8 @@ func main() {
 
 				data.tellers = []string{"!"}
 				data.tellers = append(data.tellers, strings.Split(text, "\n")...)
-
-				mode = UpdateHistory
-			case UpdateHistory:
+			} else {
 				data.history[data.teller] = append(data.history[data.teller], text)
-
-				mode = UpdateTellers
-				connection.Request <- readwriter.Request{To: "!", Command: "lst", Body: "."}
 			}
 		case e := <-uiEvents:
 			switch data.selection {
@@ -177,7 +171,12 @@ func main() {
 						data.cursor -= 1
 					}
 				case "<Space>":
-					data.input += " "
+					if data.cursor == len(data.input) {
+						data.input += " "
+					} else {
+						data.input = data.input[:data.cursor] + " " + data.input[data.cursor:]
+					}
+
 					data.cursor += 1
 				case "<Resize>", "<MouseLeft>", "<MouseRight>", "<MouseRelease>", "<Tab>":
 				case "<Left>":
@@ -209,28 +208,26 @@ func main() {
 
 					switch len(parts) {
 					case 1:
-						connection.Request <- readwriter.Request{To: data.teller, Command: parts[0], Body: "."}
+						connection.Request <- readwriter.Request{To: data.teller, Command: parts[0], Body: ".\n"}
 					case 2:
-						connection.Request <- readwriter.Request{To: data.teller, Command: parts[0], Body: parts[1]}
+						connection.Request <- readwriter.Request{To: data.teller, Command: parts[0], Body: parts[1] + "\n"}
 					}
-
-					mode = UpdateHistory
 
 					data.input = ""
 					data.cursor = 0
+
+					connection.Request <- readwriter.Request{To: "!", Command: "lst", Body: "."}
 				case "<C-u>":
 					if data.selection > 1 {
 						data.selection -= 1
 					}
 
-					mode = UpdateTellers
 					connection.Request <- readwriter.Request{To: "!", Command: "lst", Body: "."}
 				case "<C-y>":
 					if data.selection < 2 {
 						data.selection += 1
 					}
 
-					mode = UpdateTellers
 					connection.Request <- readwriter.Request{To: "!", Command: "lst", Body: "."}
 				case "<C-j>":
 					if data.historyShift < len(data.history[data.teller])-1 {
@@ -241,7 +238,12 @@ func main() {
 						data.historyShift -= 1
 					}
 				default:
-					data.input += e.ID
+					if data.cursor == len(data.input) {
+						data.input += e.ID
+					} else {
+						data.input = data.input[:data.cursor] + e.ID + data.input[data.cursor:]
+					}
+
 					data.cursor += 1
 				}
 			case 1:
