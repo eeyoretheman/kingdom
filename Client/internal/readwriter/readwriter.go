@@ -6,7 +6,6 @@ import (
 	Read "kli/internal/reader"
 	"log"
 	"net"
-	"os"
 
 	ui "github.com/gizak/termui/v3"
 )
@@ -38,22 +37,16 @@ func ReadWriterHandler(writer *ReadWriter) {
 		case input := <-request:
 			err := error(nil)
 
-			out_file, _ := os.OpenFile("testlogfile.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-			log.SetOutput(out_file)
-
 			if input.To == "!" {
 				_, err = conn.Write([]byte(fmt.Sprintf("%s ! %s %s", writer.From, input.Command, input.Body)))
-				log.Printf("Sent %s ! %s %s", writer.From, input.Command, input.Body)
 			} else {
 				_, err = conn.Write([]byte(fmt.Sprintf("%s %s %s %s", writer.From, input.To, input.Command, input.Body)))
-				log.Printf("Sent %s %s %s %s", writer.From, input.To, input.Command, input.Body)
 			}
 
 			if err != nil {
 				log.Printf("Write failed; Error: %s\n", err)
 			}
 		case data := <-reader:
-			log.Printf("Received %s", data)
 			response <- data
 		case err := <-readerErr:
 			log.Printf("Read failed; Error: %s\n", err)
